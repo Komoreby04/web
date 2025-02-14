@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+    <title>Reporte de Agencias</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .content {
+            padding: 20px;
+        }
+        .report {
+            background-color: white;
+            padding: 5px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
+            width: 50%;
+        }
+        table {
+            width: 50%;
+            border-collapse: collapse;
+            margin: 0 auto;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+        th {
+            background-color: #007e54;
+            color: white;
+            margin: 0 auto;
+        }
+        .report-date {
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            margin-left: 25%;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            margin-left: 43%;
+            padding: 10px 20px;
+            background-color: #007e54;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #005e2c;
+        }
+        h1{
+            color: #006f4a;
+            text-align: center;
+        }
+        .btn-eliminar {
+            background-color: #e74c3c; /* Color rojo para el icono de basura */
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Alinea el ícono en el centro del botón */
+            margin-left: 90%;
+        }
+
+
+        /* Efecto hover para el botón */
+        .btn-eliminar:hover {
+            background-color: #c0392b; /* Rojo más oscuro al pasar el mouse */
+            transform: scale(1.05); /* Efecto de agrandamiento */
+        }
+
+        /* Efecto para hacer que el botón se vea mejor en pantallas pequeñas */
+        @media (max-width: 600px) {
+            .btn-eliminar {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="content">
+        <h1>Reporte IVEE</h1>
+
+        {% if total_por_agencia %}
+            <div class="report-date"> Fecha del reporte: {{ fecha_seleccionada }}</div>
+            <div class="report">            
+                <table>
+                    <tr>
+                        <th>División</th>
+                        <th>Zona</th>
+                        <th>Literal</th>
+                        <th>Agencia</th>
+                        <th>Ingresos</th>
+                        <th>Cobranza Electrónica</th>
+                        <th>DAP</th>
+                        <th>Total</th>
+                    </tr>
+                    {% for agencia, datos in total_por_agencia.items() %}
+                    <tr>
+                        <td>{{ datos.División }}</td>
+                        <td>{{ datos.Zona }}</td>
+                        <td>{{ datos.Literal }}</td>
+                        <td>
+                            <a href="/reporte_mensual_agencia?fecha={{ fecha_seleccionada }}&nombre_agencia={{ datos['Nombre'] }}">
+                                {{ datos['Nombre'] }}
+                            </a>
+                            
+                        </td> 
+                        <td>{{ datos.Ingresos }}</td>
+                        <td>{{ datos['Cobranza Electrónica'] }}</td>
+                        <td>{{ datos.DAP }}</td>
+                        <td>{{ datos.Total }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan="4"><strong>TOTALES</strong></td>
+                        <td><strong>{{ total_ingresos }}</strong></td>
+                        <td><strong>{{ total_cobranza }}</strong></td>
+                        <td><strong>{{ total_dap }}</strong></td>
+                        <td><strong>{{ total_general }}</strong></td>
+                    </tr>
+                </table>
+                {% if is_admin %}
+                <button type="button" id="eliminar-registros" onclick="deleteRecords()" class="btn-eliminar">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+                {% endif %}
+                
+            </div>
+            <a href="{{ url_for('mensual_ivee', fecha=fecha_seleccionada, seccion='ventas') }}" class="btn">Visualizar Reporte Mensual</a>
+        {% else %}
+            <p>No se encontraron datos para la fecha seleccionada.</p>
+        {% endif %}
+
+        
+    </div>
+
+
+
+    <script>
+        function deleteRecords() {
+            // Obtén la fecha seleccionada, puedes adaptarlo según cómo la estés gestionando
+            var fechaSeleccionada = '{{ fecha_seleccionada }}'; 
+        
+            // Enviar la solicitud de eliminación al servidor
+            fetch('/eliminar_registros', {
+                method: 'POST',  // Usamos POST porque vamos a realizar una acción (eliminación)
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ fecha: fechaSeleccionada }),  // Enviar la fecha seleccionada
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Registros eliminados exitosamente.");
+                    location.reload();  // Recargar la página después de la eliminación
+                } else {
+                    alert("Error al eliminar registros.");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Hubo un error al intentar eliminar los registros.");
+            });
+        }
+        </script>
+        
+</body>
+</html>

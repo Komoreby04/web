@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Cartera</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.9/flatpickr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.9/flatpickr.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .report-section {
+            margin-top: 80px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .form-group input[type="text"], .form-group input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group button {
+            padding: 10px 20px;
+            background-color: #007D35;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .form-group button:hover {
+            background-color: #005e2f;
+        }
+
+        .form-group .archivo {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Inicialización de Flatpickr
+            flatpickr(".datepicker", {
+                dateFormat: "Y-m-d",
+                defaultDate: "today",
+                locale: "es"
+            });
+
+            const archivoContainer = document.getElementById("archivo-container");
+            archivoContainer.style.display = "none";
+
+            // Manejador para consultar reporte
+            document.getElementById("consultar-reporte").addEventListener("click", async function (event) {
+                const fecha = document.getElementById("fecha-cartera").value;
+                if (!fecha) {
+                    alert("Por favor, selecciona una fecha.");
+                    return;
+                }
+
+                try {
+                    const respuesta = await fetch("/verificar_fecha_cartera", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ fecha: fecha })
+                    });
+                    const data = await respuesta.json();
+
+                    if (data.existe_fecha) {
+                        window.location.href = `/consulta_cartera?fecha=${fecha}`;
+                    } else {
+                        alert("No existe un reporte para esta fecha. Por favor, carga un archivo.");
+                        archivoContainer.style.display = "block";
+                    }
+                } catch (error) {
+                    console.error("Error al verificar la fecha:", error);
+                    alert("Hubo un error al verificar la fecha. Intenta nuevamente.");
+                }
+            });
+
+            // Manejador para generar reporte
+            document.getElementById("generar-reporte").addEventListener("click", async function (event) {
+                const fecha = document.getElementById("fecha-cartera").value;
+                const archivoInput = document.getElementById("archivo-input");
+                const archivo = archivoInput.files[0];
+
+                if (!fecha) {
+                    alert("Por favor, selecciona una fecha.");
+                    return;
+                }
+
+                if (!archivo) {
+                    alert("Por favor, selecciona un archivo.");
+                    return;
+                }
+
+                try {
+                    const formData = new FormData();
+                    formData.append("archivo", archivo);
+
+                    const respuesta = await fetch(`/procesar_archivo_cartera?fecha=${fecha}`, {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    if (respuesta.ok) {
+                    const data = await respuesta.json();
+                    console.log(data);  // Verifica los datos que devuelve el servidor
+                    window.location.href = `/consulta_cartera?fecha=${fecha}`;
+                } else {
+                    const errorData = await respuesta.json();
+                    alert("Errooooor: " + errorData.error);
+                    }
+                } catch (error) {
+                    console.error("Error al generar el reporte:", error);
+                    alert("Hubo un error al generar el reporte. Intenta nuevamente.");
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div id="mensaje-exito" style="display:none; padding: 10px; background-color: #4CAF50; color: white; border-radius: 5px; margin-bottom: 20px;">
+        Los registros fueron eliminados con éxito.
+    </div>
+    
+    <div id="carga-cartera" class="report-section">
+        <h1>Reporte de Cartera</h1>
+        <form id="form-cartera" action="/cargar_archivo_cartera" method="POST" enctype="multipart/form-data">
+            <!-- Selección de fecha -->
+            <div class="form-group">
+                <label for="fecha-cartera">Selecciona una fecha:</label>
+                <input type="text" id="fecha-cartera" name="fecha" class="datepicker" placeholder="Selecciona una fecha" required>
+            </div>
+
+            <!-- Botón para consultar -->
+            <div class="form-group">
+                <button type="button" id="consultar-reporte">Consultar Reporte</button>
+            </div>
+
+            <!-- Campo de carga de archivo -->
+            <div id="archivo-container" class="form-group archivo">
+                <label for="archivo-input">Selecciona un archivo .txt:</label>
+                <input type="file" name="archivo" id="archivo-input">
+                <button type="button" id="generar-reporte">Generar Reporte</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Reporte Cartera</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .content {
+            padding: 20px;
+            display: flex;
+            justify-content: center; /* Centra todo el contenido dentro del contenedor */
+            flex-direction: column;
+            align-items: center;
+        }
+        .report {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 50%; /* Ancho reducido para la tabla */
+            margin: 0 auto;
+            text-align: center; /* Centra el contenido dentro del div */
+        }
+        table {
+            width: 80%; /* Ajuste para que la tabla ocupe el 100% del ancho disponible */
+            margin: 0 auto;
+            border-collapse: collapse; /* Quita los espacios entre celdas */
+        }
+        th, td {
+            padding: 5px; /* Reducir el espacio entre las celdas */
+            text-align: left;
+            border: 1px solid #ccc;
+            font-size: 14px; /* Tamaño de texto más pequeño */
+        }
+        th {
+            background-color: #007D35;
+            color: white;
+        }
+        td {
+            background-color: white; /* Fondo blanco para las celdas */
+        }
+        .report-date {
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            margin-right: 14%;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007D35;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #005e2c;
+        }
+        h1 {
+            color: #07ca62;
+            text-align: center;
+        }
+        .delete-container {
+            display: flex;
+            margin-left: 128%;
+            width: 100%; /* Asegura que el contenedor ocupe todo el ancho */
+            margin-top: 20px;
+        }
+
+        .btn-eliminar {
+            background-color: #e74c3c;
+            color: white;
+            padding: 5px 10px; /* Tamaño reducido */
+            font-size: 14px;  /* Tamaño de texto más pequeño */
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px; /* Espacio entre el ícono y el texto */
+        }
+
+        .btn-eliminar i {
+            font-size: 14px; /* Tamaño del ícono */
+        }
+
+        .btn-eliminar:hover {
+            background-color: #c0392b;
+            transform: scale(1.05);
+        }
+        .detalles-table {
+        display: none;
+        width: 40%; /* Ancho más pequeño para la segunda tabla */
+        margin: 0 auto;
+        font-size: 11px; /* Tamaño de fuente más pequeño */
+        text-align: center; /* Centrar el texto en la tabla */
+        }
+
+        .detalles-table th, .detalles-table td {
+            text-align: center; /* Centrar el texto en las celdas */
+            padding: 4px; /* Menos espacio entre celdas */
+        }
+        /* Agregar estilo para ocultar las tablas de detalles al principio */
+        .detalles-table {
+            display: none;
+        }
+
+        /* Mostrar la tabla de detalles cuando se activa */
+        .detalles-table.active {
+            display: table;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="content">
+        <h1>Reporte Cartera</h1>
+
+
+        <div class="report-date">Fecha del Reporte: {{ fecha }}</div>
+
+        <div class="report">
+            <table id="tabla-principal">
+                <tr>
+                    <th>Agencia</th>
+                    <th>Cartera Vencida</th>
+                    <th>Cartera Fresca</th>
+                    <th>Total</th>
+                </tr>
+                {% for agencia, datos in totales_agencia.items() %}
+                    <tr>
+                        <td>
+                            <a href="javascript:void(0);" onclick="mostrarDetalles('{{ agencia }}')" style="color: #007D35; text-decoration: underline;">{{ agencia }}</a>
+                        </td>
+                        <td>${{ '{:,.2f}'.format(datos['Cartera Vencida']) }}</td>
+                        <td>${{ '{:,.2f}'.format(datos['Cartera Fresca']) }}</td>
+                        <td>${{ '{:,.2f}'.format(datos['Cartera Fresca'] + datos['Cartera Vencida']) }}</td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <td colspan="3"><strong>TOTALES</strong></td>
+                    <td><strong>${{ '{:,.2f}'.format(total_fresca + total_vencida) }}</strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Tablas de detalles para cada agencia -->
+        {% for agencia, datos in totales_agencia.items() %}
+            <table id="detalles-{{ agencia }}" class="detalles-table">
+                <thead>
+                    <tr>
+                        <th>Agencia:</th>
+                        <th>Número de Servicios</th>
+                        <th>Adeudos</th>
+                        <th>Importe Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ agencia }}</td>
+                        <td>
+                            <a href="javascript:void(0);" onclick="mostrarRPU('{{ agencia }}')">
+                                {% if datos['total_servicios_unicos'] is number %}
+                                    {{ datos['total_servicios_unicos'] }}
+                                {% else %}
+                                    <span>Valor incorrecto</span>
+                                {% endif %}
+                            </a>
+                        </td>
+                        <td>${{ '{:,.2f}'.format(datos['Cartera Vencida']) }}</td>
+                        <td>${{ '{:,.2f}'.format(datos['Cartera Fresca'] + datos['Cartera Vencida']) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+        {% endfor %}
+
+        <!-- Formulario para eliminar registros -->
+        <div class="delete-container">
+            <form id="deleteForm" action="{{ url_for('eliminar_registros_cartera') }}" method="POST">
+                <input type="hidden" name="fecha" value="{{ fecha }}">
+                <button type="submit" class="btn-eliminar">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+
+console.log(document.getElementById("total_servicios").innerText);
+        // Función para mostrar el reporte de una agencia y ocultar la tabla principal
+        function mostrarDetalles(agencia) {
+            // Ocultar la tabla principal
+            document.getElementById('tabla-principal').style.display = 'none';
+
+            // Mostrar la tabla de detalles correspondiente a la agencia
+            const detallesTable = document.getElementById('detalles-' + agencia);
+            if (detallesTable) {
+                detallesTable.classList.add('active');
+            }
+        }
+
+        // El formulario se enviará automáticamente al presionar el botón.
+        document.querySelector('.btn-eliminar').addEventListener('click', function(e) {
+            if (!confirm('¿Estás seguro de eliminar todos los registros de esta fecha?')) {
+                e.preventDefault(); // Detiene el formulario si el usuario cancela.
+            } else {
+                // Mostrar mensaje de éxito
+                document.getElementById("mensaje-exito").style.display = "block";
+    
+                // Redirige a la página de consulta una vez que se haya confirmado la eliminación
+                setTimeout(function() {
+                    // Usamos la ruta correcta para redirigir a consulta_cuadre
+                    window.location.href = "{{ url_for('consulta_cuadre') }}"; 
+                }, 2000); // Retardo de 2 segundos para ver el mensaje de éxito
+            }
+        });
+    </script>
+
+</body>
+</html>

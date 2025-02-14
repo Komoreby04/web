@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Mensual IVEE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Estilizado básico */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 60%;
+            margin-top: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #006f4a;
+            font-size: 24px;
+        }
+        h2 {
+            text-align: left;
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 15px;
+            margin-top: 15px;
+            margin-left: 90px;
+        }
+        table {
+            width: auto; /* Cambiar a auto para ajustar al contenido */
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13px; /* Reducir tamaño de fuente */
+            margin-left: auto;  /* Alinea la tabla a la izquierda */
+            margin-right: auto; /* Alinea la tabla a la derecha */
+        }
+        th, td {
+            padding: 6px 10px; /* Reducir padding */
+            border: 1px solid #ccc;
+            text-align: left; /* Alineación a la izquierda por defecto */
+        }
+        th {
+            background-color: #007e54;
+            color: white;
+            text-align: center; /* Centrar encabezado */
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #e0e0e0;
+        }
+        .bajo {
+            color: white;
+            background-color: red;
+        }
+        .regular {
+            color: black;
+            background-color: yellow;
+        }
+        .alto {
+            color: white;
+            background-color: green;
+        }
+        .form-group {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .form-group input[type="month"], .form-group input[type="file"] {
+            padding: 8px;
+            font-size: 14px;
+            width: 180px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+        .form-group button {
+            padding: 8px 15px;
+            font-size: 14px;
+            background-color: #007e54;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .form-group button:hover {
+            background-color: #007e54;
+        }
+        .no-data {
+            text-align: center;
+            color: #ff6f61;
+            font-size: 16px;
+        }
+        #cargar-archivo {
+            background-color: #f9f9f9;  /* Fondo claro para la sección */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        #cargar-archivo label {
+            font-size: 16px;
+            color: #333;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        #cargar-archivo input[type="file"] {
+            padding: 10px;
+            font-size: 14px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background-color: #fff;
+            width: 220px;
+            display: inline-block;
+        }
+
+        #cargar-archivo button {
+            padding: 8px 18px;
+            font-size: 14px;
+            background-color: #007e54;  /* Color llamativo para el botón */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #cargar-archivo button:hover {
+            background-color: #005b2a;  /* Efecto hover */
+        }
+        .delete-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: red;
+            font-size: 12px;
+            display: flex;
+            align-items: left;
+            text-align: left;
+            margin-bottom: 15px;
+            margin-top: 15px;
+            margin-left: 90px;
+        }
+        .delete-button i {
+            margin-right: 5px;
+        }
+        .delete-button:hover {
+            color: darkred;
+        }
+        .alert-success {
+        position: absolute;              /* Permite posicionarlo sobre otros elementos */
+        top: 10px;                       /* Espacio desde la parte superior */
+        left: 50%;                       /* Centra horizontalmente */
+        transform: translateX(-50%);     /* Ajuste para centrar el mensaje */
+        background-color: rgba(212, 237, 218, 0.8); /* Fondo verde claro con opacidad */
+        color: #155724;                  /* Color del texto */
+        padding: 15px 20px;              /* Relleno interno */
+        border: 1px solid rgba(195, 230, 203, 0.8); /* Borde con opacidad */
+        border-radius: 5px;              /* Esquinas redondeadas */
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Sombra para destacar */
+        font-family: Arial, sans-serif;  /* Fuente más limpia */
+        font-size: 16px;                 /* Tamaño de letra */
+        z-index: 1000;                   /* Asegura que el mensaje esté sobre otros elementos */
+    }
+
+    </style>
+</head>
+<body>
+
+    {% if message %}
+    <div class="alert alert-success">
+        {{ message }}
+    </div>
+{% endif %}
+
+<div class="container">
+    <br>
+    <br>
+    <h1>Reporte Mensual IVEE [Nivel zona]</h1>
+
+    <div class="form-group">
+        <label for="month">Selecciona el mes:</label>
+        <form action="/mensual_ivee" method="get">
+            <input type="month" id="month" name="month" value="{{ selected_month }}" required>
+            <button type="submit">Consultar Reporte</button>
+        </form>
+    </div>
+
+    {% if meta_ivee is not none %}
+    <script>
+        document.getElementById('meta-ivee').style.display = 'block';
+        document.getElementById('cargar-archivo').style.display = 'none';
+    </script>
+
+{% else %}
+    <p class="no-data">No hay meta registrada para el mes {{ selected_month }}.</p>
+    <script>
+        document.getElementById('cargar-archivo').style.display = 'block';
+    </script>
+    {% if is_admin %}
+        <div id="cargar-archivo">
+            <!-- Formulario para cargar archivo -->
+            <label for="archivo_excel">Cargar archivo Excel con las metas:</label>
+            <form action="/cargar-meta?fecha={{ selected_month }}" method="POST" enctype="multipart/form-data">
+                <input type="file" id="archivo_excel" name="archivo_excel" accept=".xlsx, .xls" required>
+                <button type="submit">Cargar Metas</button>
+            </form>
+        </div>
+    {% endif %}
+{% endif %}
+
+
+    {% if meta_ivee %}
+    <h2>Reporte de {{ selected_month }}</h2>
+    {% set total_cumplimiento = 0 %}
+    {% set count = 0 %}
+    
+    {% if datos_totales %}
+        <table>
+            <tr>
+                <th>Fecha</th>
+                <th>Meta</th>
+                <th>Ingresos</th>
+                <th>Cobranza Electrónica</th>
+                <th>DAP</th>
+                <th>Total</th>
+                <th>Cumplimiento</th>
+            </tr>
+    
+            {% for total in datos_totales %}
+
+            
+                {% set cumplimiento = 0 %}
+                {% set meta_value = meta_ivee.get(total['Fecha'], 0) %}
+                
+                <!-- Eliminar símbolos no numéricos, como el $ y las comas -->
+                {% set total_value_raw = total['Total']|replace(',', '')|replace('$', '') %}
+    
+                <!-- Verificar si total_value_raw tiene un valor numérico -->
+                {% if total_value_raw %}
+                    {% set total_value_float = total_value_raw|float %}
+                {% else %}
+                    {% set total_value_float = 0 %}
+                {% endif %}
+    
+    
+                <!-- Convertir meta_value a float -->
+                {% set meta_value_float = meta_value|float %}
+    
+                <!-- Verificar si meta_value es mayor a 0 y total_value es válido antes de hacer la operación -->
+                {% if meta_value_float > 0 and total_value_float > 0 %}
+                    {% set cumplimiento = (total_value_float / meta_value_float) * 100 %}
+
+                {% else %}
+                    {% set cumplimiento = 0 %}
+
+                {% endif %}
+    
+                <td>{{ total['Fecha'] }}</td>
+                <td>${{ '{:,.2f}'.format(meta_value) }}</td>
+                <td>{{ total['Ingresos'] }}</td>
+                <td>{{ total['Cobranza Electrónica'] }}</td>
+                <td>{{ total['DAP'] }}</td>
+                <td>{{ total['Total'] }}</td>
+
+                <!-- Mostrar el cumplimiento con colores -->
+                <td class=" 
+                    {% if cumplimiento < 50 %}
+                        bajo
+                    {% elif cumplimiento < 80 %}
+                        regular
+                    {% else %}
+                        alto
+                    {% endif %}
+                ">
+                    {{ cumplimiento | round(2) }}%
+                </td>
+            </tr>
+    
+            {% set total_cumplimiento = total_cumplimiento + cumplimiento %}
+            {% set count = count + 1 %}
+        {% endfor %}
+    
+        <tr class="total-row">
+            <td><strong>Total</strong></td>
+            <td>{{ total_meta_ivee }}</td>
+            <td>{{ total_ingresos_sum }}</td>
+            <td>{{ total_cobranza_sum }}</td>
+            <td>{{ total_dap_sum }}</td>
+            <td>{{ total_general_sum }}</td>
+            {% set total_meta_ivee_float = total_meta_ivee|replace('$', '')|replace(',', '')|float %}
+            {% set total_general_sum_float = total_general_sum|replace('$', '')|replace(',', '')|float %}
+            
+            {% set cumplimiento_total_calculado = 0 %}
+            {% if total_meta_ivee_float != 0 %}
+                {% set cumplimiento_total_calculado = (total_general_sum_float / total_meta_ivee_float) * 100 %}
+            {% else %}
+                {% set cumplimiento_total_calculado = 0 %}
+            {% endif %}
+            
+            <td class="
+                {% if total_meta_ivee_float != 0 %}
+                    {% if cumplimiento_total_calculado < 50 %}
+                        bajo
+                    {% elif cumplimiento_total_calculado < 80 %}
+                        regular
+                    {% else %}
+                        alto
+                    {% endif %}
+                {% else %}
+                    no-calculable
+                {% endif %}
+            ">
+                {% if total_meta_ivee_float != 0 %}
+                    {{ cumplimiento_total_calculado | round(2) }}%
+                {% else %}
+                    No se puede calcular
+                {% endif %}
+            </td>
+            
+        
+        
+    </table>
+    {% if is_admin %}
+    <form action="/eliminar_meta" method="POST">
+        <input type="hidden" name="fecha" value="{{ selected_month }}">
+        <button type="submit" class="delete-button" title="Eliminar todas las metas del mes">
+            <i class="fas fa-trash"></i> Eliminar metas
+        </button>
+    </form>    
+    
+    {% endif %}
+    {% else %}
+        <p>No se encontraron datos.</p>
+    {% endif %}
+    
+    
+
+{% else %}
+<!-- Aquí puedes poner lo que se muestra cuando no hay meta_ivee -->
+{% endif %}
+
+</div>
+
+</body>
+
+</html>

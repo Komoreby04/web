@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Mensual Agencia</title>
+    <style>
+        /* Estilizado básico */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 50%;
+        }
+        h1 {
+            text-align: center;
+            color: #006f4a;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+        th {
+            background-color: #007e54;
+            color: white;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #e0e0e0; /* Fila de totales con color gris claro */
+        }
+        .bajo {
+            color: white;
+            background-color: red;
+        }
+        .regular {
+            color: black;
+            background-color: yellow;
+        }
+        .alto {
+            color: white;
+            background-color: green;
+        }
+        .total-fila {
+            background-color: #d3f9d8; /* Color personalizado para la fila de totales */
+            font-weight: bold;
+        }
+        .sin-cumplimiento {
+    color: gray;
+    font-style: italic;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reporte Mensual IVEE</h1>
+        <p>Reporte del mes de <strong>{{ mes_seleccionado }}</strong> / {{ año_seleccionado }} para la agencia <strong>{{ nombre_agencia }}</strong>.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Meta</th>
+                    <th>Ingresos</th>
+                    <th>Cobranza Electrónica</th>
+                    <th>DAP</th>
+                    <th>Total</th>
+                    <th>Cumplimiento</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fecha, datos in total_por_dia.items() %}
+                <tr>
+                    <td>{{ fecha | datetime("%d") }}</td>
+                    <td>{{ datos['meta'] | currency }}</td>
+                    <td>{{ datos['Ingresos'] | currency }}</td>
+                    <td>{{ datos['Cobranza Electrónica'] | currency }}</td>
+                    <td>{{ datos['DAP'] | currency }}</td>
+                    <td>{{ datos['Total'] | currency }}</td>
+                    <td class="
+                    {% if datos['meta'] == 0 %}
+                        sin-cumplimiento
+                    {% else %}
+                        {% set cumplimiento = (datos['Total'] / datos['meta']) * 100 %}
+                        {% if cumplimiento < 50 %}
+                            bajo
+                        {% elif cumplimiento < 80 %}
+                            regular
+                        {% else %}
+                            alto
+                        {% endif %}
+                    {% endif %}
+                ">
+                    {% if datos['meta'] == 0 %}
+                        <span class="sin-cumplimiento">Sin cumplimiento</span>
+                    {% else %}
+                        {{ cumplimiento | round(2) }}%
+                    {% endif %}
+                </td>
+                
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="total-fila">
+                    <td><strong>Totales</strong></td>
+                    <td>{{ meta_total | currency }}</td>
+                    <td>{{ total_ingresos | currency }}</td>
+                    <td>{{ total_cobranza | currency }}</td>
+                    <td>{{ total_dap | currency }}</td>
+                    <td>{{ total_total | currency }}</td>
+                    <td class="
+                        {% set cumplimiento_total_calculado = (total_total / meta_total) * 100 %}
+                        {% if cumplimiento_total_calculado < 50 %}
+                            bajo
+                        {% elif cumplimiento_total_calculado < 80 %}
+                            regular
+                        {% else %}
+                            alto
+                        {% endif %}
+                    ">
+                        {{ cumplimiento_total | round(2) }}%
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</body>
+</html>

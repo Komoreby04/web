@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú de Reportes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.9/flatpickr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.9/flatpickr.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .report-section {
+            margin-top: 80px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .form-group input[type="text"], .form-group input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group button {
+            padding: 10px 20px;
+            background-color: #007e54;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .form-group button:hover {
+            background-color: #005e2f;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <script>
+
+    document.addEventListener("DOMContentLoaded", async function () {
+        try {
+            // Obtén el rol del usuario desde el backend
+            const response = await fetch('/get_role');
+            const data = await response.json();
+
+            if (data.status === "success") {
+                const rolUsuario = data.role; // Dinámicamente asignado
+                console.log("Rol del usuario obtenido del servidor:", rolUsuario); // Depuración
+
+                // Mostrar el formulario correspondiente según el rol
+                if (rolUsuario === "administrador") {
+                    document.getElementById("carga-ivee").classList.remove("hidden");
+                    console.log("Formulario de administrador visible.");
+                } else if (rolUsuario === "consultor") {
+                    document.getElementById("generar-reporte-temporal").classList.remove("hidden");
+                    console.log("Formulario de consultor visible.");
+                } else {
+                    console.warn("Rol desconocido:", rolUsuario);
+                }
+            } else {
+                console.error("Error al obtener el rol del usuario:", data.message);
+                alert("Error al cargar el rol del usuario. Intenta nuevamente.");
+            }
+        } catch (error) {
+            console.error("Error al comunicarse con el servidor:", error);
+            alert("Hubo un problema al cargar el rol. Por favor, revisa tu conexión.");
+        }
+
+        // Inicializar Flatpickr en los campos de fecha
+        flatpickr(".datepicker", {
+            dateFormat: "Y-m-d",
+            defaultDate: "today",
+            locale: "es"
+        });
+        console.log("Flatpickr inicializado en los campos de fecha.");
+    });
+
+    
+        async function verificarFecha(tipoFormulario) {
+            let fecha = '';
+            let archivoElement = '';
+            let botonGenerar = '';
+    
+            console.log("Formulario en uso:", tipoFormulario); // Depuración
+    
+            // Determinar elementos según el tipo de formulario
+            if (tipoFormulario === 'ivee') {
+                fecha = document.getElementById('fecha-ivee').value;
+                archivoElement = document.getElementById('archivo-ivee');
+                botonGenerar = document.getElementById('boton-generar-reporte');
+            } else if (tipoFormulario === 'temporal') {
+                fecha = document.getElementById('fecha-temporal').value;
+                archivoElement = document.getElementById('archivo-temporal');
+                botonGenerar = document.getElementById('boton-generar-reporte-temporal');
+            }
+    
+            console.log("Fecha seleccionada:", fecha); // Depuración
+    
+            // Validar si hay una fecha seleccionada
+            if (!fecha) {
+                alert("Por favor, selecciona una fecha.");
+                console.error("No se seleccionó una fecha."); // Depuración
+                return;
+            }
+    
+            try {
+                console.log("Enviando solicitud para verificar fecha...");
+                const respuesta = await fetch('/verificar_fecha', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fecha: fecha })
+                });
+                const data = await respuesta.json();
+    
+                console.log("Respuesta del servidor:", data); // Depuración
+    
+                if (data.existe_reporte) {
+                    console.log("Redirigiendo a reporte existente para la fecha:", fecha); // Depuración
+                    window.location.href = `/consulta_ivee?fecha=${fecha}`;
+                } else {
+                    alert("No existe un reporte para esta fecha.");
+                    console.log("No se encontró un reporte. Mostrando opciones para cargar archivo."); // Depuración
+                    archivoElement.classList.remove('hidden');
+                    botonGenerar.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error("Error al verificar la fecha:", error);
+                alert("Hubo un error al verificar la fecha. Intenta nuevamente.");
+            }
+        }
+    </script>
+    
+
+    <!-- Formulario para cargar archivo (Reporte IVEE) - Solo para Administrador -->
+    <div id="carga-ivee" class="report-section hidden">
+        <h1>Reporte IVEE</h1>
+        <form id="form-ivee" action="/cargar_archivo" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="fecha-ivee">Selecciona una fecha:</label>
+                <input type="text" id="fecha-ivee" name="fecha" class="datepicker" placeholder="Selecciona una fecha" required>
+            </div>
+            <div class="form-group">
+                <button type="button" onclick="verificarFecha('ivee')">Consultar Reporte</button>
+            </div>
+            <div id="archivo-ivee" class="form-group hidden">
+                <label for="archivo">Selecciona un archivo .txt:</label>
+                <input type="file" name="archivo" id="archivo" required>
+            </div>
+            <div class="form-group hidden" id="boton-generar-reporte">
+                <button type="submit">Generar Reporte</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Formulario para generar reporte temporal - Solo para Consultor -->
+    <div id="generar-reporte-temporal" class="report-section hidden">
+        <h1>Reporte IVEE</h1>
+        <form id="form-temporal" action="/cargar_archivo" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="fecha-temporal">Selecciona una fecha:</label>
+                <input type="text" id="fecha-temporal" name="fecha" class="datepicker" placeholder="Selecciona una fecha" required>
+            </div>
+            <div class="form-group">
+                <button type="button" onclick="verificarFecha('temporal')">Consultar Reporte</button>
+            </div>
+            <div id="archivo-temporal" class="form-group hidden">
+                <label for="archivo-temporal">Selecciona un archivo .txt:</label>
+                <input type="file" name="archivo" id="archivo-temporal" required>
+            </div>
+            <div class="form-group hidden" id="boton-generar-reporte-temporal">
+                <button type="submit">Generar Reporte Temporal</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
